@@ -60,12 +60,16 @@ async function scrapeShopifyProducts(url) {
   });
 
   for (const product of products) {
-    await supabase.from("products").insert({
+    const { error } = await supabase.from("products").insert({
       title: product.title,
       price: product.price,
       url: product.url,
       scraped_at: new Date().toISOString()
     });
+    
+    if (error) {
+      console.error("❌ Supabase insert error:", error.message);
+    }    
   }
 
   fs.writeFileSync(
