@@ -10,29 +10,56 @@ export default function HomePage() {
         <p className="text-lg mb-6">
           Boost your margins with AI-powered pricing for your Shopify store.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Input placeholder="Enter your email" className="w-full sm:w-64" />
-          <Input placeholder="Your Shopify store URL" className="w-full sm:w-64" />
-          <Button>Join Free Beta</Button>
-        </div>
+        <form
+          action="https://formspree.io/f/YOUR_FORM_ID"
+          method="POST"
+          className="flex flex-col sm:flex-row justify-center gap-4"
+        >
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="Enter your email"
+            className="border px-4 py-2 rounded w-full sm:w-64"
+          />
+          <input
+            type="text"
+            name="store"
+            required
+            placeholder="Your Shopify store URL"
+            className="border px-4 py-2 rounded w-full sm:w-64"
+          />
+          <button
+            type="submit"
+            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+          >
+            Join Free Beta
+          </button>
+        </form>
       </header>
 
       <section className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 mb-20">
         <Card>
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-2">Smart Pricing</h2>
-            <p>AI suggests prices daily based on demand, inventory & competitors.</p>
+            <p>
+              AI suggests prices daily based on demand, inventory & competitors.
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-2">Competitor Monitoring</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Competitor Monitoring
+            </h2>
             <p>Track competitor prices in real-time with automated scraping.</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-2">1-Click Price Updates</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              1-Click Price Updates
+            </h2>
             <p>Sync prices directly to your Shopify store with one click.</p>
           </CardContent>
         </Card>
