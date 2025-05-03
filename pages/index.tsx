@@ -11,7 +11,7 @@ export default function HomePage() {
           Boost your margins with AI-powered pricing for your Shopify store.
         </p>
         <form
-          action="https://formspree.io/f/YOUR_FORM_ID"
+          action="https://formspree.io/f/xpwdpjyn"
           method="POST"
           className="flex flex-col sm:flex-row justify-center gap-4"
         >
