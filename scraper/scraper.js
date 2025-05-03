@@ -68,8 +68,11 @@ async function scrapeShopifyProducts(url) {
     });
     
     if (error) {
-      console.error("❌ Supabase insert error:", error.message);
-    }    
+      console.error("❌ Supabase insert failed:", error.message);
+    } else {
+      console.log(`✅ Inserted: ${product.title}`);
+    }
+     
   }
 
   fs.writeFileSync(
