@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/router";
 
 type Product = {
@@ -17,21 +17,44 @@ export default function DashboardPage() {
   const [storeFilter, setStoreFilter] = useState<string | null>(null);
   const [stores, setStores] = useState<Set<string>>(new Set());
   const [email, setEmail] = useState<string>("");
+  const [isPro, setIsPro] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
     const fetchUserAndProducts = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
+        const {
+            data: { session },
+            error: sessionError,
+          } = await supabase.auth.getSession();
+          
+          const user = session?.user;
+          
+          console.log("Supabase SESSION:", session);
+          console.log("User from session:", user);
+          console.log("Session error:", sessionError);
+          
+          if (!user) {
+            router.push("/login");
+            return;
+          }
+          
+          
       setEmail(user.email || "");
 
+      // Fetch Pro status
+      const { data: userRow, error: userError } = await supabase
+        .from("users")
+        .select("is_pro")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) {
+        console.error("User fetch error:", userError);
+      } else {
+        setIsPro(userRow?.is_pro || false);
+      }
+
+      // Fetch products
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -101,26 +124,37 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <section className="text-center mt-16">
-        <h2 className="text-2xl font-bold mb-4">Upgrade to Pro</h2>
-        <p className="mb-6 text-gray-600">
-          Unlock daily price optimization, competitor tracking, and more.
-        </p>
-        <button
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded"
-          onClick={async () => {
-            const res = await fetch("/api/create-checkout-session", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email }),
-            });
-            const data = await res.json();
-            if (data.url) window.location.href = data.url;
-          }}
-        >
-          Subscribe to Pro Plan
-        </button>
-      </section>
+      {!isPro && (
+        <section className="text-center mt-16">
+          <h2 className="text-2xl font-bold mb-4">Upgrade to Pro</h2>
+          <p className="mb-6 text-gray-600">
+            Unlock daily price optimization, competitor tracking, and more.
+          </p>
+          <button
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded"
+            onClick={async () => {
+              const res = await fetch("/api/create-checkout-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+              });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url;
+            }}
+          >
+            Subscribe to Pro Plan
+          </button>
+        </section>
+      )}
+
+      {isPro && (
+        <section className="text-center mt-16">
+          <h2 className="text-2xl font-bold mb-4 text-green-700">✅ Pro Active</h2>
+          <p className="text-gray-600">
+            You're subscribed to the Pro plan. Premium features are unlocked.
+          </p>
+        </section>
+      )}
     </div>
   );
 }

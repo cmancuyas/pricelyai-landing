@@ -1,4 +1,3 @@
-// pages/api/webhooks/stripe.ts
 import { buffer } from "micro";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
@@ -9,12 +8,10 @@ export const config = {
   },
 };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-08-16",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
@@ -44,10 +41,17 @@ export default async function handler(req: any, res: any) {
     const email = session.customer_email;
 
     if (email) {
-      await supabase.auth.admin.updateUserByEmail(email, {
-        user_metadata: { role: "pro" },
-      });
-      console.log(`✅ Upgraded ${email} to pro`);
+      const { error } = await supabase
+        .from("users")
+        .update({ is_pro: true })
+        .eq("email", email);
+
+      if (error) {
+        console.error("❌ Failed to upgrade user in DB:", error.message);
+        return res.status(500).json({ error: error.message });
+      }
+
+      console.log(`✅ Upgraded ${email} to Pro (users table)`);
     }
   }
 
