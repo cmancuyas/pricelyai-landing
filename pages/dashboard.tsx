@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/router";
+import { usePro } from "../context/ProContext"; // ✅ Pro context
 
 type Product = {
   id: string;
@@ -17,44 +18,25 @@ export default function DashboardPage() {
   const [storeFilter, setStoreFilter] = useState<string | null>(null);
   const [stores, setStores] = useState<Set<string>>(new Set());
   const [email, setEmail] = useState<string>("");
-  const [isPro, setIsPro] = useState<boolean>(false);
+
   const router = useRouter();
+  const { isPro, loading: proLoading } = usePro(); // ✅ use context
 
   useEffect(() => {
     const fetchUserAndProducts = async () => {
-        const {
-            data: { session },
-            error: sessionError,
-          } = await supabase.auth.getSession();
-          
-          const user = session?.user;
-          
-          console.log("Supabase SESSION:", session);
-          console.log("User from session:", user);
-          console.log("Session error:", sessionError);
-          
-          if (!user) {
-            router.push("/login");
-            return;
-          }
-          
-          
-      setEmail(user.email || "");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      // Fetch Pro status
-      const { data: userRow, error: userError } = await supabase
-        .from("users")
-        .select("is_pro")
-        .eq("id", user.id)
-        .single();
+      const user = session?.user;
 
-      if (userError) {
-        console.error("User fetch error:", userError);
-      } else {
-        setIsPro(userRow?.is_pro || false);
+      if (!user) {
+        router.push("/login");
+        return;
       }
 
-      // Fetch products
+      setEmail(user.email || "");
+
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -76,7 +58,13 @@ export default function DashboardPage() {
     ? products.filter((p) => p.store === storeFilter)
     : products;
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (loading || proLoading) {
+    return (
+      <p className="text-center mt-10 text-gray-600 text-lg">
+        Loading your dashboard...
+      </p>
+    );
+  }
 
   return (
     <div className="min-h-screen px-6 py-10 bg-gray-50">
@@ -122,6 +110,19 @@ export default function DashboardPage() {
             <p className="text-xs text-gray-400">Store: {p.store}</p>
           </div>
         ))}
+
+        <button
+          onClick={async () => {
+            const res = await fetch("/api/create-portal-session", {
+              method: "POST",
+            });
+            const data = await res.json();
+            if (data.url) window.location.href = data.url;
+          }}
+          className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+        >
+          Manage Subscription
+        </button>
       </div>
 
       {!isPro && (
@@ -149,7 +150,9 @@ export default function DashboardPage() {
 
       {isPro && (
         <section className="text-center mt-16">
-          <h2 className="text-2xl font-bold mb-4 text-green-700">✅ Pro Active</h2>
+          <h2 className="text-2xl font-bold mb-4 text-green-700">
+            ✅ Pro Active
+          </h2>
           <p className="text-gray-600">
             You're subscribed to the Pro plan. Premium features are unlocked.
           </p>

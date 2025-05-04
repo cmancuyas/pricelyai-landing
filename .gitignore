@@ -4,3 +4,11 @@ out/
 .env
 .DS_Store
 .env.local
+
+## 🧹 Maintenance Scripts
+
+### `scripts/clean-orphan.ts`
+Deletes Stripe customers that are not linked to any user in Supabase.
+
+```bash
+npx ts-node scripts/clean-orphan.ts

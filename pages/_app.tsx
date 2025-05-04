@@ -6,6 +6,9 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 
+import { ProProvider } from "../context/ProContext";
+import { UserProvider } from "../context/UserContext"; // ✅ added
+
 export default function App({ Component, pageProps }: AppProps) {
   const [supabaseClient] = useState(() => createPagesBrowserClient());
   const router = useRouter();
@@ -34,7 +37,6 @@ export default function App({ Component, pageProps }: AppProps) {
       }
     }
 
-    // Give the UI a brief time window before showing the app
     const timeout = setTimeout(() => setIsRouting(false), 200);
     return () => clearTimeout(timeout);
   }, [router, supabaseClient]);
@@ -49,7 +51,11 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <SessionContextProvider supabaseClient={supabaseClient}>
-      <Component {...pageProps} />
+      <UserProvider>
+        <ProProvider>
+          <Component {...pageProps} />
+        </ProProvider>
+      </UserProvider>
     </SessionContextProvider>
   );
 }
