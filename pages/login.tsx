@@ -1,87 +1,63 @@
+// pages/login.tsx
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "../lib/supabaseClient";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import Spinner from "../components/Spinner";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
   const router = useRouter();
+  const supabase = createPagesBrowserClient();
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const hash = window.location.hash;
-    console.log("🔍 Current hash:", hash);
-  
-    if (hash.includes("access_token") && hash.includes("refresh_token")) {
-      const params = new URLSearchParams(hash.substring(1));
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
-  
-      console.log("🔑 access_token:", access_token);
-      console.log("🔑 refresh_token:", refresh_token);
-  
-      if (access_token && refresh_token) {
-        supabase.auth
-          .setSession({ access_token, refresh_token })
-          .then(({ data, error }) => {
-            if (error) {
-              console.error("❌ setSession ERROR:", error.message);
-            } else {
-              console.log("✅ Session set successfully:", data);
-              router.replace("/dashboard");
-            }
-          });
-      }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${location.origin}/dashboard` },
+    });
+
+    setLoading(false);
+
+    if (error) {
+      alert(error.message);
     } else {
-      console.log("⚠️ No tokens found in hash.");
-      setLoading(false);
+      alert("Check your email for the login link!");
     }
-  }, [router]);
-  
-
-  const handleLogin = async () => {
-    setSending(true);
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    setSending(false);
-
-    if (error) alert(error.message);
-    else alert("Magic link sent! Check your email.");
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-gray-300 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-700">Logging you in...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.push("/dashboard");
+    });
+  }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-8 bg-white rounded shadow max-w-sm w-full">
-        <h2 className="text-2xl font-bold mb-4 text-center">Sign in to PricelyAI</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-6 rounded shadow-md w-full max-w-md"
+      >
+        <h1 className="text-xl font-bold mb-4">Login to PricelyAI</h1>
         <input
           type="email"
-          placeholder="you@example.com"
+          placeholder="Your email"
           value={email}
+          required
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-2 mb-4 border rounded"
+          className="w-full mb-4 px-4 py-2 border rounded"
         />
         <button
-          onClick={handleLogin}
-          className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 flex justify-center"
-          disabled={sending}
+          type="submit"
+          disabled={loading}
+          className="bg-indigo-600 text-white w-full py-2 rounded hover:bg-indigo-700 flex justify-center items-center"
         >
-          {sending ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            "Send Magic Link"
-          )}
+          {loading && <Spinner className="mr-2" />}
+          {loading ? "Sending..." : "Send Magic Link"}
         </button>
-      </div>
+      </form>
     </div>
   );
 }
